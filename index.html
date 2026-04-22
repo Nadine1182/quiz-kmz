@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>KMZ – Einsteiger KMZ Multiple Choice Quiz</title>
+
+<style>
+    body {
+        margin: 0;
+        font-family: "Inter", Arial, sans-serif;
+        background: #f4f7fb;
+    }
+
+    header {
+        background: #1f6feb;
+        padding: 20px;
+        color: white;
+        text-align: center;
+        font-size: 26px;
+        font-weight: bold;
+        letter-spacing: 1px;
+    }
+
+    .container {
+        max-width: 900px;
+        margin: 30px auto;
+        padding: 10px;
+    }
+
+    .card {
+        background: white;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-radius: 10px;
+        border-left: 6px solid #1f6feb;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+    }
+
+    .question {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 15px;
+    }
+
+    .choice {
+        display: block;
+        margin: 8px 0;
+        padding: 12px 15px;
+        background: #eef4ff;
+        border: 2px solid #b8cef8;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: 0.2s;
+    }
+
+    .choice:hover {
+        background: #d7e7ff;
+    }
+
+    .correct {
+        background: #2ecc71 !important;
+        color: white !important;
+        border-color: #27ae60 !important;
+    }
+
+    .wrong {
+        background: #e74c3c !important;
+        color: white !important;
+        border-color: #c0392b !important;
+    }
+
+    /* Endscreen */
+    #finalBox {
+        display: none;
+        background: #1f6feb;
+        color: white;
+        padding: 35px;
+        margin: 50px auto;
+        border-radius: 15px;
+        text-align: center;
+        font-size: 26px;
+        font-weight: bold;
+        max-width: 700px;
+        box-shadow: 0 5px 18px rgba(0,0,0,0.20);
+        opacity: 0;
+        transform: scale(0.8);
+        transition: all 0.6s ease;
+    }
+
+    #finalBox.show {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    #finalWord {
+        font-size: 42px;
+        margin-top: 15px;
+        letter-spacing: 4px;
+        display: inline-block;
+        animation: pulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    #restartBtn {
+        margin-top: 25px;
+        background: white;
+        color: #1f6feb;
+        border: 2px solid white;
+        padding: 12px 22px;
+        font-size: 18px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    #restartBtn:hover {
+        background: #eef4ff;
+    }
+
+    /* INTRO OVERLAY */
+    #introOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: #1f6feb;
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 9999;
+        opacity: 0;
+        transform: scale(0.9);
+        animation: introFadeIn 0.8s forwards ease;
+    }
+
+    #introTitle {
+        font-size: 48px;
+        font-weight: bold;
+        margin-bottom: 10px;
+        animation: introSlideDown 0.8s ease forwards;
+    }
+
+    #introSubtitle {
+        font-size: 22px;
+        opacity: 0;
+        animation: introFadeText 1.2s ease forwards;
+        animation-delay: 0.6s;
+    }
+
+    #introStartBtn {
+        margin-top: 25px;
+        padding: 14px 26px;
+        background: white;
+        color: #1f6feb;
+        font-size: 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0;
+        transform: scale(0.7);
+        animation: introButton 0.7s ease forwards;
+        animation-delay: 1.2s;
+    }
+
+    #introStartBtn:hover {
+        background: #e3ebff;
+    }
+
+    /* Intro Animationen */
+    @keyframes introFadeIn {
+        to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes introSlideDown {
+        0% { transform: translateY(-40px); opacity: 0; }
+        100% { transform: translateY(0); opacity: 1; }
+    }
+
+    @keyframes introFadeText {
+        0% { opacity: 0; }
+        100% { opacity: 1; }
+    }
+
+    @keyframes introButton {
+        0% { opacity: 0; transform: scale(0.7); }
+        100% { opacity: 1; transform: scale(1); }
+    }
+</style>
+
+<script>
+let solvedCorrect = 0;
+let maxQuestions = 12;
+
+function checkAnswer(cardId, selectedOption, correctOption) {
+    let card = document.getElementById(cardId);
+    let choices = card.querySelectorAll(".choice");
+
+    if (card.dataset.done === "true") return;
+
+    choices.forEach(choice => {
+        choice.style.pointerEvents = "none";
+
+        if (choice.dataset.option === correctOption) {
+            choice.classList.add("correct");
+        } else if (choice.dataset.option === selectedOption) {
+            choice.classList.add("wrong");
+        }
+    });
+
+    card.dataset.done = "true";
+
+    if (selectedOption === correctOption) {
+        solvedCorrect++;
+    }
+
+    if (solvedCorrect === maxQuestions) {
+        showFinalScreen();
+    }
+}
+
+function showFinalScreen() {
+    let box = document.getElementById("finalBox");
+    let wordBox = document.getElementById("finalWord");
+
+    box.style.display = "block";
+
+    setTimeout(() => {
+        box.classList.add("show");
+    }, 20);
+
+    let word = "WILLKOMMEN IM TEAM";
+    let i = 0;
+    wordBox.innerHTML = "";
+
+    function typeLetter() {
+        if (i < word.length) {
+            wordBox.innerHTML += word[i];
+            i++;
+            setTimeout(typeLetter, 120);
+        }
+    }
+
+    typeLetter();
+}
+
+function restartQuiz() {
+    solvedCorrect = 0;
+
+    let cards = document.querySelectorAll(".card");
+    cards.forEach(card => {
+        card.dataset.done = "false";
+
+        let choices = card.querySelectorAll(".choice");
+        choices.forEach(choice => {
+            choice.classList.remove("correct", "wrong");
+            choice.style.pointerEvents = "auto";
+        });
+    });
+
+    let box = document.getElementById("finalBox");
+    box.style.display = "none";
+    box.classList.remove("show");
+
+    document.getElementById("finalWord").innerHTML = "";
+}
+
+/* Intro schließen */
+function startQuiz() {
+    let intro = document.getElementById("introOverlay");
+    intro.style.transition = "opacity 0.7s ease, transform 0.7s ease";
+    intro.style.opacity = "0";
+    intro.style.transform = "scale(1.1)";
+
+    setTimeout(() => {
+        intro.style.display = "none";
+    }, 750);
+}
+</script>
+</head>
+
+<body>
+
+<!-- INTRO -->
+<div id="introOverlay">
+    <div id="introTitle">Willkommen beim KMZ‑Quiz!</div>
+    <div id="introSubtitle">Wissen, Humor und auditi‑Skills – alles in einem Test.</div>
+    <button id="introStartBtn" onclick="startQuiz()">Quiz starten</button>
+</div>
+
+<header>
+    KMZ – Lustiges & Ernstes Multiple‑Choice Quiz
+</header>
+
+<div class="container">
+
+    <!-- 12 Fragen – kombiniert -->
+
+    <div class="card" id="q1">
+        <div class="question">1) In welcher Plattform findet man KMZ‑Prozesse, Vorlagen und Richtlinien?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q1','A','B')">A) auditi</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q1','B','B')">B) Langdock</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q1','C','B')">C) SharePoint</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q1','D','B')">D) Outlook</div>
+    </div>
+
+    <div class="card" id="q2">
+        <div class="question">2) Wer ist für Personalthemen bei KMZ zuständig?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q2','A','A')">A) Marvin-Wolf Spellerberg-Lebsanft</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q2','B','A')">B) Das IT-Team</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q2','C','A')">C) Das Marketing</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q2','D','A')">D) Die Prüfungsleitung</div>
+    </div>
+
+    <div class="card" id="q3">
+        <div class="question">3) Welche Pflichtunterlage wird jährlich erneuert?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q3','A','B')">A) Kaffeeküchenordnung</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q3','B','B')">B) Unabhängigkeitserklärung</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q3','C','B')">C) Alles‑ist‑gut‑Formular</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q3','D','B')">D) Büromaterial‑Inventur</div>
+    </div>
+
+    <div class="card" id="q4">
+        <div class="question">4) Wo werden prüfungsrelevante Arbeitspapiere ausgetauscht?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q4','A','A')">A) auditi</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q4','B','A')">B) MS Teams Chat</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q4','C','A')">C) USB‑Stick</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q4','D','A')">D) Ausdruck im Pausenraum</div>
+    </div>
+
+    <div class="card" id="q5">
+        <div class="question">5) Wer vergibt initial neue IT‑Zugänge?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q5','A','B')">A) Die Praktikanten</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q5','B','B')">B) IT‑Service</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q5','C','B')">C) Marketing</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q5','D','B')">D) Kolleg*innen im Nebenbüro</div>
+    </div>
+
+    <div class="card" id="q6">
+        <div class="question">6) Was ist die offizielle KMZ‑CI‑Farbenkombination?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q6','A','A')">A) Blau‑Weiß</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q6','B','A')">B) Rot‑Grün</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q6','C','A')">C) Orange‑Petrol</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q6','D','A')">D) Regenbogen</div>
+    </div>
+
+    <div class="card" id="q7">
+        <div class="question">7) Welcher Satz fällt im KMZ am häufigsten?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q7','A','A')">A) „Kannst du mal kurz?“</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q7','B','A')">B) „Warte, ich lade’s in auditi…“</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q7','C','A')">C) „Wo ist meine SmartCard?“</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q7','D','A')">D) „Ich mach nur schnell einen Kaffee.“</div>
+    </div>
+
+    <div class="card" id="q8">
+        <div class="question">8) Was ist der heimliche KMZ‑Volkssport?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q8','A','B')">A) Bürostuhl‑Slalom</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q8','B','B')">B) Sprint zur Kaffeemaschine</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q8','C','B')">C) IT‑Ticket‑Speedrun</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q8','D','B')">D) „Ich dachte, du machst das?“‑Pingpong</div>
+    </div>
+
+    <div class="card" id="q9">
+        <div class="question">9) Welches Geräusch hört man im KMZ am meisten?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q9','A','A')">A) Stöhnen weil der Kaffeesatz geleert werden muss</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q9','B','A')">B) Drucker‑Stöhnen</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q9','C','A')">C) „Hat jemand meinen Kuli gesehen?“</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q9','D','A')">D) „Warum geht das heute wieder nicht?“</div>
+    </div>
+
+    <div class="card" id="q10">
+        <div class="question">10) Was passiert IMMER, wenn die IT den Raum verlässt?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q10','A','B')">A) Der Drucker explodiert</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q10','B','B')">B) Alles funktioniert plötzlich nicht mehr</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q10','C','B')">C) Nichts — weil sie nie gehen</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q10','D','B')">D) Das WLAN fällt aus</div>
+    </div>
+
+    <div class="card" id="q11">
+        <div class="question">11) Woran erkennt man neue KMZ‑Mitarbeitende?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q11','A','A')">A) Sie lächeln noch</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q11','B','A')">B) Sie kennen die Prozesse auswendig</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q11','C','A')">C) Sie öffnen auditi ohne zu seufzen</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q11','D','A')">D) Sie suchen 15 Minuten die „2. Etage“</div>
+    </div>
+
+    <div class="card" id="q12">
+        <div class="question">12) Was ist das wahre KMZ‑Nationalgetraenk?</div>
+        <div class="choice" data-option="A" onclick="checkAnswer('q12','A','A')">A) Kalt gewordener Kaffee</div>
+        <div class="choice" data-option="B" onclick="checkAnswer('q12','B','A')">B) Weingummi aus dem Besprechungsraum</div>
+        <div class="choice" data-option="C" onclick="checkAnswer('q12','C','A')">C) Mandantenkekse</div>
+        <div class="choice" data-option="D" onclick="checkAnswer('q12','D','A')">D) Kantinenkartoffeln</div>
+    </div>
+
+</div>
+
+<!-- FINAL SCREEN -->
+<div id="finalBox">
+    🎉 LÖSUNGSWORT:<br>
+    <div id="finalWord"></div>
+    <br><br>
+    <button id="restartBtn" onclick="restartQuiz()">Quiz erneut starten</button>
+</div>
+
+</body>
+</html>
